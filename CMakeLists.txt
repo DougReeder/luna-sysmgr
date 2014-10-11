@@ -83,7 +83,6 @@ set(HEADERS
     Src/base/Security.h
     Src/base/SystemService.h
     Src/base/DisplayManager.h
-    Src/base/InputEventMonitor.h
     Src/core/PtrArray.h
     Src/core/GraphicsDefs.h)
 
@@ -97,7 +96,6 @@ set(SOURCES
     Src/base/EASPolicyManager.cpp
     Src/base/SuspendBlocker.cpp
     Src/base/SystemService.cpp
-    Src/base/InputEventMonitor.cpp
     Src/Main.cpp)
 
 add_executable(LunaSysMgr ${SOURCES})

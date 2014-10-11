@@ -144,6 +144,7 @@ static LSMethod privateDisplayMethods[] = {
 //    {"setCallStatus", DisplayManager::controlCallStatus},
 	{"lockStatus", DisplayManager::controlLockStatus},
 	{"setLockStatus", DisplayManager::controlSetLockStatus},
+    {"notifyAboutInputEvent", DisplayManager::controlNotifyAboutInputEvent},
     {},
 };
 
@@ -2485,6 +2486,79 @@ done:
 		json_object_put(root);
 
 	return true;
+}
+
+bool DisplayManager::controlNotifyAboutInputEvent(LSHandle *sh, LSMessage *message, void *ctx)
+{
+    LSError lserror;
+    LSErrorInit(&lserror);
+
+    bool result = false;
+    const char* str = LSMessageGetPayload(message);
+    json_object* root = 0;
+    json_object* eventObj = 0, *isPressObj = 0;
+    DisplayManager *dm = ((DisplayCallbackCtx_t *)ctx)->ctx;
+    const char *errorText = NULL;
+    int errorCode = 0;
+
+    if (!str)
+         goto done;
+
+    root = json_tokener_parse(str);
+    if (!root || is_error(root))
+         goto done;
+
+    eventObj = json_object_object_get(root, "event");
+    if (eventObj)
+    {
+        const char *status = json_object_get_string(eventObj);
+
+        if (g_strcmp0(status, "powerkey") == 0)
+        {
+            isPressObj = json_object_object_get(root, "isPress");
+            if (isPressObj)
+            {
+                bool isPress = jsonn_object_get_boolean(isPressObj);
+                dm->handlePowerKey(isPress);
+                result = true;
+            }
+            else
+            {
+                errorText = "isPress field is missing";
+                errorCode = -1;
+            }
+        }
+        else if (g_strcmp0(status, "touch") == 0)
+        {
+            dm->handleTouchEvent();
+            result = true;
+        }
+        else {
+            errorText = "Unknown event";
+            errorCode = 1;
+        }
+    }
+
+done:
+    if (result)
+        result = LSMessageReply(sh, message, "{\"returnValue\":true}", &lserror);
+    else
+    {
+        gchar *r = g_strdup_printf ("{\"returnValue\":false,\"errorCode\":%i,\"errorText\":\"%s\"}", errorCode, errorText);
+        result = LSMessageReply(sh, message, r, &lserror);
+        g_free (r);
+    }
+
+    if(!result)
+    {
+        LSErrorPrint (&lserror, stderr);
+        LSErrorFree (&lserror);
+    }
+
+    if (root && !is_error(root))
+        json_object_put(root);
+
+    return true;
 }
 
 DisplayManager::~DisplayManager()

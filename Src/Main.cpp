@@ -40,7 +40,6 @@
 #include "EASPolicyManager.h"
 #include "Logging.h"
 #include "DisplayManager.h"
-#include "InputEventMonitor.h"
 
 #include <ProcessKiller.h>
 
@@ -767,9 +766,6 @@ int main( int argc, char** argv)
 
 	// Initialize our display manager
 	new DisplayManager();
-
-	// Initialize input event monitor
-	InputEventMonitor::instance();
 
 	app.exec();
 
